@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+<body>
+
+<h2>💬 Live Chat</h2>
+<div class="main-container">
+    <div id="chat-section">
+        <div id="chat-box"></div>
+        <div class="chat-input">
+            <input type="text" id="message" placeholder="Ketik pesan..." onkeydown="checkEnter(event)">
+            <button onclick="sendMessage()">Kirim</button>
+        </div>
+    </div>
+
+    <div id="users-box">
+        <h3>👥 Pengguna Aktif (<span id="user-count">0</span>)</h3>
+        <ul id="user-list"></ul>
+    </div>
+</div>
+
+<script>
+function loadMessages() {
+    fetch('get.php')
+        .then(res => res.json())
+        .then(data => {
+            let box = document.getElementById("chat-box");
+            box.innerHTML = '';
+            data.forEach(item => {
+                box.innerHTML += `
+                    <p>
+                        <small>${item.time}</small>
+                        <b>${item.user}</b>: ${item.message}
+                    </p>`;
+            });
+            box.scrollTop = box.scrollHeight;
+        });
+}
+
+function loadUsers() {
+    fetch('users.php')
+        .then(res => res.json())
+        .then(data => {
+            const list = document.getElementById("user-list");
+            const count = document.getElementById("user-count");
+            list.innerHTML = "";
+            data.forEach(u => {
+                const li = document.createElement("li");
+                li.innerHTML = `<span class="dot-online"></span> ${u.name}`;
+                list.appendChild(li);
+            });
+            count.textContent = data.length;
+        });
+}
+
+function sendMessage() {
+    let message = document.getElementById("message").value.trim();
+    if (!message) return alert("Pesan tidak boleh kosong!");
+    fetch('send.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `message=${encodeURIComponent(message)}`
+    }).then(() => {
+        document.getElementById("message").value = "";
+        loadMessages();
+    });
+}
+
+function checkEnter(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
+}
+
+setInterval(() => {
+    loadMessages();
+    loadUsers();
+}, 2000);
+
+loadMessages();
+loadUsers();
+</script>
+</body>
+</html>
